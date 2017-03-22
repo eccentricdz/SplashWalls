@@ -88,7 +88,16 @@ export default class SplashWalls extends Component {
                   <NetworkImage
                     source={{uri: `https://unsplash.it/${wallpaper.width}/${wallpaper.height}?image=${wallpaper.id}`}}
                     indicator={Circle}
-                    style={styles.wallpaperImage}>
+                    style={styles.wallpaperImage}
+                    indicatorProps = {
+                      {
+                        color: '#fff',
+                        size: 60
+                      }
+                    }
+                    >
+                    <Text style={styles.label}>Photo by</Text>
+                    <Text style={styles.label_author}>{wallpaper.author}</Text>
                   </NetworkImage>
                 </View>
               )
@@ -126,7 +135,28 @@ const styles = StyleSheet.create({
   wallpaperImage: {
     width: width,
     height: height,
-    backgroundColor: '#000'
+    backgroundColor: 'transparent'
+  },
+  label: {
+    position: 'absolute',
+    top: 35,
+    left: 10,
+    color: '#fff',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: width / 3,
+    padding: 5,
+    fontSize: 10
+  },
+  label_author: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    width: width / 2,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    color: '#fff',
+    padding: 5,
+    fontSize: 13,
+    fontWeight: 'bold'
   }
 });
 

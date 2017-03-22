@@ -18,7 +18,7 @@ import {
 import RandManager from './rand-manager'
 import Swiper from 'react-native-swiper'
 import NetworkImage from 'react-native-image-progress'
-import Progress from 'react-native-progress'
+import {Circle} from 'react-native-progress'
 
 const WALL_COUNT = 5
 const {width, height} = Dimensions.get('window')
@@ -87,7 +87,7 @@ export default class SplashWalls extends Component {
                 <View key={index}>
                   <NetworkImage
                     source={{uri: `https://unsplash.it/${wallpaper.width}/${wallpaper.height}?image=${wallpaper.id}`}}
-                    indicator={Progress.Circle}
+                    indicator={Circle}
                     style={styles.wallpaperImage}>
                   </NetworkImage>
                 </View>
@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#000'
   },
   wallpaperImage: {
-    flex: 1,
     width: width,
     height: height,
     backgroundColor: '#000'

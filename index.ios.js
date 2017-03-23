@@ -12,15 +12,21 @@ import {
   Text,
   View,
   ActivityIndicator,
-  Dimensions
+  Dimensions,
+  PanResponder,
+  CameraRoll,
+  AlertIOS
 } from 'react-native';
 
 import RandManager from './rand-manager'
 import Swiper from 'react-native-swiper'
 import NetworkImage from 'react-native-image-progress'
 import {Circle} from 'react-native-progress'
+import Utils from './utils'
 
 const WALL_COUNT = 5
+const DOUBLTAP_DELAY = 300
+const DOUBLETAP_RADIUS = 20
 const {width, height} = Dimensions.get('window')
 
 export default class SplashWalls extends Component {
@@ -29,12 +35,49 @@ export default class SplashWalls extends Component {
 
     this.state = {
       isLoading: true,
-      wallsJSON: []
+      wallsJSON: [],
     }
+
+    this.imagePanResponder = {}
+    this.prevTouchInfo = {
+      prevTouchX: 0,
+      prevTouchY: 0,
+      prevTouchTimeStamp: 0
+    }
+    this.currentWallIndex = 0
+    this.handlePanResponderEnd = this.handlePanResponderEnd.bind(this)
+    this.onMomentumScrollEnd = this.onMomentumScrollEnd.bind(this)
+  }
+
+  componentWillMount() {
+    this.imagePanResponder = PanResponder.create({
+      onStartShouldSetPanResponder: this.handleStartShouldSetPanResponder,
+      onPanResponderGrant: this.handlePanResponderGrant,
+      onPanResponderRelease: this.handlePanResponderEnd,
+      onPanResponderTerminate: this.handlePanResponderEnd
+    })
   }
 
   componentDidMount() {
     this.fetchWallsJSON()
+  }
+
+  saveCurrentWallpaperToComeraRoll() {
+    const {wallsJSON} = this.state;
+    const currentWall = wallsJSON[this.currentWallIndex];
+    const currentWallURL = `http://unsplash.it/${currentWall.width}/${currentWall.height}?image=${currentWall.id}`;
+
+    CameraRoll.saveToCameraRoll(currentWallURL, 'photo', (data) => {
+      AlertIOS.alert(
+        'Saved',
+        'Wallpaper successfully saved to Camera Roll',
+        [
+          {text: 'High 5!', onPress: () => console.log('OK Pressed!')}
+        ]
+      );
+      },(err) =>{
+      console.log('Error saving to camera roll', err);
+    });
   }
 
   fetchWallsJSON() {
@@ -59,6 +102,38 @@ export default class SplashWalls extends Component {
       })
   }
 
+  handleStartShouldSetPanResponder(e, gestureState) {
+    return true
+  }
+
+  handlePanResponderGrant(e, gestureState) {
+  }
+
+  handlePanResponderEnd(e, gestureState) {
+    //console.log('The touch was released')
+    currentTouchTimeStamp = Date.now();
+
+    if(this.isDoubleTouch(currentTouchTimeStamp, gestureState))
+      this.saveCurrentWallpaperToComeraRoll()
+
+    this.prevTouchInfo = {
+      prevTouchX: gestureState.x0,
+      prevTouchY: gestureState.y0,
+      prevTouchTimeStamp: currentTouchTimeStamp
+    }
+  }
+
+  isDoubleTouch(currentTouchTimeStamp, {x0, y0}) {
+    const {prevTouchX, prevTouchY, prevTouchTimeStamp} = this.prevTouchInfo
+    if(currentTouchTimeStamp - prevTouchTimeStamp < DOUBLTAP_DELAY && Utils.distance(x0,y0,prevTouchX,prevTouchY) < DOUBLETAP_RADIUS)
+      return true
+    return false
+  }
+
+  onMomentumScrollEnd(e, state, context) {
+    this.currentWallIndex = state.index
+  }
+
   renderLoadingMessage() {
     return (
       <View style={styles.loadingContainer}>
@@ -80,7 +155,8 @@ export default class SplashWalls extends Component {
         dotStyle={{backgroundColor:'rgba(255,255,255,.4)', width: 8, height: 8,borderRadius: 10, marginLeft: 3, marginRight: 3, marginTop: 3, marginBottom: 3}}
         activeDotStyle = {{backgroundColor: '#fff', width: 13, height: 13, borderRadius: 7, marginLeft: 7, marginRight: 7}}
         loop={false}
-        style={{backgroundColor: '#000'}}>
+        style={{backgroundColor: '#000'}}
+        onMomentumScrollEnd = {this.onMomentumScrollEnd}>
           {
             wallsJSON.map((wallpaper, index) => {
               return (
@@ -95,6 +171,7 @@ export default class SplashWalls extends Component {
                         size: 60
                       }
                     }
+                    {...this.imagePanResponder.panHandlers}
                     >
                     <Text style={styles.label}>Photo by</Text>
                     <Text style={styles.label_author}>{wallpaper.author}</Text>
